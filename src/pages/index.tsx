@@ -22,7 +22,11 @@ export default function Home() {
 
   const socketInitializer = async () => {
     await fetch('/api/socket');
-    socket = socketIO();
+    socket = socketIO(typeof window !== 'undefined' ? window.location.origin : '', {
+      path: '/api/socket',
+
+      transports: ['websocket', 'polling']
+    });
 
     socket.on('participants', (updatedParticipants: string[]) => {
       setParticipants(updatedParticipants);
