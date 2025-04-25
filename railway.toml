@@ -1,9 +1,14 @@
 [build]
 builder = "NIXPACKS"
+buildCommand = "npm run build"
 
 [deploy]
-startCommand = "next start -p $PORT"
+startCommand = "npm run start"
 restartPolicyType = "ON_FAILURE"
+healthcheckPath = "/"
+healthcheckTimeout = 100
 
 [env]
 NODE_ENV = "production"
+PORT = "8080"
+NODE_OPTIONS = "--max-old-space-size=512"
