@@ -51,6 +51,14 @@ app.prepare().then(() => {
     const server = createServer((req, res) => {
       try {
         const parsedUrl = parse(req.url, true);
+        
+        // Add health check endpoint
+        if (parsedUrl.pathname === '/health') {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ status: 'ok' }));
+        }
+
         handle(req, res, parsedUrl);
       } catch (err) {
         console.error('Error handling request:', err);
@@ -118,8 +126,13 @@ app.prepare().then(() => {
     });
 
     server.listen(port, '0.0.0.0', (err) => {
-      if (err) throw err;
-      console.log(`> Ready on port ${port}`);
+      if (err) {
+        console.error('Failed to start server:', err);
+        throw err;
+      }
+      console.log(`> Server started successfully on port ${port}`);
+      console.log('> Environment:', process.env.NODE_ENV);
+      console.log('> WebSocket enabled and ready for connections');
     });
   } catch (err) {
     console.error('Error starting server:', err);

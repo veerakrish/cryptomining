@@ -5,10 +5,9 @@ buildCommand = "npm run build"
 [deploy]
 startCommand = "npm run start"
 restartPolicyType = "ON_FAILURE"
-healthcheckPath = "/"
-healthcheckTimeout = 100
+healthcheckPath = "/health"
+healthcheckTimeout = 10
 
 [env]
 NODE_ENV = "production"
 PORT = "8080"
-NODE_OPTIONS = "--max-old-space-size=512"
