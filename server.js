@@ -54,6 +54,7 @@ app.prepare().then(() => {
   let participants = [];
   let currentRound = null;
   let winner = null;
+  let admin = null;
 
   io.on('connection', (socket) => {
     console.log('Client connected');
@@ -61,13 +62,20 @@ app.prepare().then(() => {
     socket.on('join', (name) => {
       if (!participants.includes(name)) {
         participants.push(name);
+        if (!admin) {
+          admin = name;
+          socket.emit('adminStatus', true);
+        }
         io.emit('participants', participants);
-        io.emit('roundStatus', { isActive: currentRound !== null });
+        io.emit('roundStatus', { isActive: currentRound !== null, admin });
         if (winner) io.emit('winner', winner);
       }
     });
 
-    socket.on('startRound', () => {
+    socket.on('startRound', (name) => {
+      if (name !== admin) {
+        return;
+      }
       if (currentRound === null) {
         currentRound = Date.now();
         winner = null;

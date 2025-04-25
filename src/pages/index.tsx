@@ -32,6 +32,17 @@ export default function Home() {
       setParticipants(updatedParticipants);
     });
 
+    socket.on('adminStatus', (isAdmin: boolean) => {
+      setIsAdmin(isAdmin);
+    });
+
+    socket.on('roundStatus', ({ isActive, admin }: { isActive: boolean; admin: string }) => {
+      setIsActive(isActive);
+      if (admin === name) {
+        setIsAdmin(true);
+      }
+    });
+
     socket.on('roundStarted', ({ round }: { round: number }) => {
       setIsActive(true);
       setTimeLeft(120);
@@ -71,7 +82,7 @@ export default function Home() {
 
   const handleStartRound = () => {
     if (isAdmin) {
-      socket.emit('startRound');
+      socket.emit('startRound', name);
     }
   };
 
