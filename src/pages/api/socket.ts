@@ -38,7 +38,15 @@ export default function SocketHandler(
   }
 
   console.log('Socket is initializing');
-  const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents>(res.socket.server as any);
+  const io = new SocketIOServer<ClientToServerEvents, ServerToClientEvents>(res.socket.server as any, {
+    path: '/api/socket',
+    addTrailingSlash: false,
+    transports: ['websocket', 'polling'],
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST']
+    }
+  });
   res.socket.server.io = io;
 
   io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
