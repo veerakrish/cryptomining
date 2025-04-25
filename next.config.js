@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Support Railway's PORT environment variable
+  serverRuntimeConfig: {
+    port: process.env.PORT || 3000
+  },
   reactStrictMode: true,
   webpack: (config) => {
     config.externals.push({
