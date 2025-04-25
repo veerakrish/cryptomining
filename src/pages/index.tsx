@@ -51,10 +51,12 @@ export default function Home() {
     });
 
     socket.on('roundEnded', ({ winner, hash, round }: { winner: string | null; hash?: string; round: number }) => {
+      console.log('Round ended with winner:', winner, 'hash:', hash);
       setIsActive(false);
       setTimeLeft(0);
       if (winner) {
         setWinner({ name: winner, hash: hash || '' });
+        console.log('Setting winner state:', { name: winner, hash: hash || '' });
       }
     });
   };
@@ -178,10 +180,10 @@ export default function Home() {
         </div>
 
         {winner && (
-          <div className="mt-6 bg-yellow-100 border-yellow-400 border rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-2">Round Winner!</h2>
-            <p>Winner: {winner.name}</p>
-            <p className="text-sm text-gray-600">Winning Hash: {winner.hash}</p>
+          <div className="mt-4 p-4 bg-green-100 rounded">
+            <h3 className="text-xl font-bold text-green-800">🏆 Winner: {winner.name}</h3>
+            <p className="text-green-600">Winning Hash: <span className="font-mono">{winner.hash}</span></p>
+            <p className="text-sm text-green-700 mt-2">Found valid hash starting with '0'!</p>
           </div>
         )}
       </div>

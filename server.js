@@ -105,11 +105,14 @@ app.prepare().then(() => {
     socket.on('submitHash', (data) => {
       console.log('Hash submitted:', data);
       const { name, hash } = data;
+      console.log('Checking hash:', hash, 'from:', name);
       if (currentRound !== null && !winner && hash.startsWith('0')) {
+        console.log('Valid hash found! Winner:', name);
         winner = { name, hash };
-        io.emit('winner', winner);
         currentRound = null;
-        io.emit('roundEnded');
+        io.emit('roundEnded', { winner: name, hash, round: currentRound });
+      } else {
+        console.log('Hash invalid or round not active. Current round:', currentRound, 'Winner:', winner);
       }
     });
 
