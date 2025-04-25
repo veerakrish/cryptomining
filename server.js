@@ -73,24 +73,38 @@ app.prepare().then(() => {
     });
 
     socket.on('startRound', (name) => {
+      console.log('Start round requested by:', name);
+      console.log('Current admin:', admin);
+      
       if (name !== admin) {
+        console.log('Not admin, ignoring start request');
         return;
       }
+
       if (currentRound === null) {
+        console.log('Starting new round...');
         currentRound = Date.now();
+        const roundNumber = currentRound;
         winner = null;
-        io.emit('roundStarted');
+
+        io.emit('roundStarted', { round: roundNumber });
+        console.log('Round started:', roundNumber);
 
         setTimeout(() => {
-          if (currentRound !== null) {
+          if (currentRound === roundNumber) {
+            console.log('Round ended:', roundNumber);
             currentRound = null;
-            io.emit('roundEnded');
+            io.emit('roundEnded', { winner: null, round: roundNumber });
           }
         }, 120000);
+      } else {
+        console.log('Round already in progress');
       }
     });
 
-    socket.on('submitHash', ({ name, hash }) => {
+    socket.on('submitHash', (data) => {
+      console.log('Hash submitted:', data);
+      const { name, hash } = data;
       if (currentRound !== null && !winner && hash.startsWith('0')) {
         winner = { name, hash };
         io.emit('winner', winner);

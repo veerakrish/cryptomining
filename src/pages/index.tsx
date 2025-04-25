@@ -81,16 +81,19 @@ export default function Home() {
   };
 
   const handleStartRound = () => {
-    if (isAdmin) {
+    console.log('Attempting to start round as:', name, 'isAdmin:', isAdmin);
+    if (isAdmin && name) {
+      console.log('Emitting startRound event');
       socket.emit('startRound', name);
     }
   };
 
   const handleMining = () => {
-    if (isActive) {
+    if (isActive && name) {
       const timestamp = Date.now().toString();
       const hash = CryptoJS.SHA256(timestamp + name).toString();
-      socket.emit('submitHash', hash);
+      console.log('Submitting hash:', { name, hash });
+      socket.emit('submitHash', { name, hash });
     }
   };
 
