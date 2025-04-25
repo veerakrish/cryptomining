@@ -1,0 +1,30 @@
+{
+  "name": "bitcoin-mining-game",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "dev:debug": "cross-env NODE_OPTIONS='--inspect' next dev"
+  },
+  "dependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "@types/node": "^20.17.31",
+    "@types/react": "^18.3.20",
+    "@types/react-dom": "^18.3.6",
+    "@types/socket.io": "^3.0.1",
+    "@types/socket.io-client": "^1.4.36",
+    "autoprefixer": "^10.4.16",
+    "crypto-js": "^4.2.0",
+    "next": "^14.0.0",
+    "postcss": "^8.4.31",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5.8.3"
+  }
+}
