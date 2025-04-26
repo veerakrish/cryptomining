@@ -58,27 +58,42 @@ app.prepare().then(() => {
     pingInterval: 25000
   });
 
-  let participants = [];
+  let participants = new Map(); // Map to store participant socket IDs
   let currentRound = null;
   let winner = null;
   let admin = null;
   let hashCounts = {};
   let blockchain = [];
+  
+  // Function to get active participants
+  const getActiveParticipants = () => {
+    return Array.from(participants.values());
+  };
+
+  // Function to broadcast updated participant list
+  const broadcastParticipants = () => {
+    io.emit('participants', getActiveParticipants());
+  };
+
+  // Periodic check for active participants
+  setInterval(() => {
+    if (currentRound !== null) {
+      broadcastParticipants();
+    }
+  }, 120000); // Every 2 minutes
 
   io.on('connection', (socket) => {
     console.log('Client connected');
 
     socket.on('join', (name) => {
-      if (!participants.includes(name)) {
-        participants.push(name);
-        if (!admin) {
-          admin = name;
-          socket.emit('adminStatus', true);
-        }
-        io.emit('participants', participants);
-        io.emit('roundStatus', { isActive: currentRound !== null, admin });
-        if (winner) io.emit('winner', winner);
+      participants.set(socket.id, name);
+      if (!admin) {
+        admin = name;
+        socket.emit('adminStatus', true);
       }
+      broadcastParticipants();
+      io.emit('roundStatus', { isActive: currentRound !== null, admin });
+      if (winner) io.emit('winner', winner);
     });
 
     socket.on('startRound', (name) => {
@@ -96,6 +111,8 @@ app.prepare().then(() => {
         const roundNumber = currentRound;
         winner = null;
         hashCounts = {};
+        // Refresh participant list at the start of new round
+        broadcastParticipants();
 
         io.emit('roundStarted', { round: roundNumber });
         console.log('Round started:', roundNumber);
@@ -137,6 +154,8 @@ app.prepare().then(() => {
           blockchain.push(block);
           io.emit('roundEnded', { winner: name, hash, round: currentRound, block });
           currentRound = null;
+          // Refresh participant list when round ends
+          broadcastParticipants();
         }
       } else {
         console.log('Hash invalid or round not active. Current round:', currentRound, 'Winner:', winner);
@@ -145,6 +164,19 @@ app.prepare().then(() => {
 
     socket.on('disconnect', () => {
       console.log('Client disconnected');
+      const disconnectedName = participants.get(socket.id);
+      participants.delete(socket.id);
+      
+      // If admin disconnected, assign new admin
+      if (disconnectedName === admin && participants.size > 0) {
+        admin = participants.values().next().value;
+        io.emit('roundStatus', { isActive: currentRound !== null, admin });
+      }
+      
+      // If round is active or just ended, broadcast updated list
+      if (currentRound !== null || winner) {
+        broadcastParticipants();
+      }
     });
   });
 

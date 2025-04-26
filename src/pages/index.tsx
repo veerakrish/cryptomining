@@ -39,6 +39,7 @@ export default function Home() {
     });
 
     socket.on('participants', (updatedParticipants: string[]) => {
+      console.log('Received updated participants:', updatedParticipants);
       setParticipants(updatedParticipants);
     });
 
@@ -54,6 +55,7 @@ export default function Home() {
     });
 
     socket.on('roundStarted', ({ round }: { round: number }) => {
+      console.log('Round started:', round);
       setIsActive(true);
       setTimeLeft(120);
       setWinner(null);
@@ -74,6 +76,8 @@ export default function Home() {
         if (block) {
           setBlockchain(prev => [...prev, block]);
         }
+        // Clear hash counts after round ends
+        setHashCounts({});
         console.log('Setting winner state:', { name: winner, hash: hash || '' });
       }
     });
