@@ -15,6 +15,14 @@ export default function Home() {
   const [timeLeft, setTimeLeft] = useState(120);
   const [winner, setWinner] = useState<{ name: string; hash: string } | null>(null);
   const [currentRound, setCurrentRound] = useState(0);
+  const [hashCounts, setHashCounts] = useState<Record<string, number>>({});
+  const [blockchain, setBlockchain] = useState<Array<{
+    index: number;
+    timestamp: number;
+    winner: string;
+    hash: string;
+    previousHash: string;
+  }>>([]);
 
   useEffect(() => {
     socketInitializer();
@@ -48,14 +56,22 @@ export default function Home() {
       setTimeLeft(120);
       setWinner(null);
       setCurrentRound(round);
+      setHashCounts({});
     });
 
-    socket.on('roundEnded', ({ winner, hash, round }: { winner: string | null; hash?: string; round: number }) => {
+    socket.on('hashCount', ({ name, count }: { name: string; count: number }) => {
+      setHashCounts(prev => ({ ...prev, [name]: count }));
+    });
+
+    socket.on('roundEnded', ({ winner, hash, round, block }: { winner: string | null; hash?: string; round: number; block?: any }) => {
       console.log('Round ended with winner:', winner, 'hash:', hash);
       setIsActive(false);
       setTimeLeft(0);
       if (winner) {
         setWinner({ name: winner, hash: hash || '' });
+        if (block) {
+          setBlockchain(prev => [...prev, block]);
+        }
         console.log('Setting winner state:', { name: winner, hash: hash || '' });
       }
     });
@@ -115,18 +131,14 @@ export default function Home() {
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-          >
-            Join Game
-          </button>
-        </form>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-8 bg-gray-100">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+      <div className="relative py-3 sm:max-w-4xl sm:mx-auto">
+        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
           <h1 className="text-2xl font-bold mb-4">Bitcoin Mining Game</h1>
           <div className="flex justify-between items-center mb-4">
             <div>
@@ -146,15 +158,52 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Mining Area</h2>
-            {isActive ? (
+            <div className="mt-4">
+              <p>Time Left: {timeLeft} seconds</p>
+              <div className="mt-2">
+                <h3 className="font-bold">Hash Counts:</h3>
+                <div className="space-y-1">
+                  {Object.entries(hashCounts).map(([player, count]) => (
+                    <div key={player} className="flex justify-between">
+                      <span>{player}:</span>
+                      <span className="font-mono">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <button
                 onClick={handleMining}
-                className="w-full bg-blue-500 text-white p-4 rounded-lg text-xl font-bold hover:bg-blue-600 active:bg-blue-700"
+                disabled={!isActive}
+                className={`mt-4 px-4 py-2 rounded ${isActive ? 'bg-blue-500 hover:bg-blue-700' : 'bg-gray-400'} text-white`}
               >
-                TAP TO MINE!
+                Mine
               </button>
-            ) : (
+            </div>
+
+            {blockchain.length > 0 && (
+              <div className="mt-8">
+                <h3 className="font-bold mb-4">Blockchain:</h3>
+                <div className="space-y-4">
+                  {blockchain.map((block, index) => (
+                    <div key={block.index} className="p-4 border rounded-lg bg-gray-50">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold">Block #{block.index}</p>
+                          <p className="text-sm">Winner: {block.winner}</p>
+                          <p className="text-xs font-mono truncate">
+                            Hash: {block.hash.substring(0, 16)}...
+                          </p>
+                        </div>
+                        {index < blockchain.length - 1 && (
+                          <div className="text-gray-400 text-2xl">↓</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {!isActive && (
               <div className="text-center text-gray-500">
                 Waiting for round to start...
               </div>

@@ -55,6 +55,8 @@ app.prepare().then(() => {
   let currentRound = null;
   let winner = null;
   let admin = null;
+  let hashCounts = {};
+  let blockchain = [];
 
   io.on('connection', (socket) => {
     console.log('Client connected');
@@ -86,6 +88,7 @@ app.prepare().then(() => {
         currentRound = Date.now();
         const roundNumber = currentRound;
         winner = null;
+        hashCounts = {};
 
         io.emit('roundStarted', { round: roundNumber });
         console.log('Round started:', roundNumber);
@@ -102,15 +105,32 @@ app.prepare().then(() => {
       }
     });
 
-    socket.on('submitHash', (data) => {
-      console.log('Hash submitted:', data);
-      const { name, hash } = data;
-      console.log('Checking hash:', hash, 'from:', name);
-      if (currentRound !== null && !winner && hash.startsWith('0')) {
-        console.log('Valid hash found! Winner:', name);
-        winner = { name, hash };
-        currentRound = null;
-        io.emit('roundEnded', { winner: name, hash, round: currentRound });
+    socket.on('submitHash', ({ name, hash }) => {
+      console.log('Hash submitted:', { name, hash });
+      if (currentRound !== null && !winner) {
+        // Update hash count for the participant
+        hashCounts[name] = (hashCounts[name] || 0) + 1;
+        io.emit('hashCount', { name, count: hashCounts[name] });
+
+        // Convert hash to binary string
+        const binary = Array.from(hash.substring(0, 2))
+          .map(char => parseInt(char, 16).toString(2).padStart(4, '0'))
+          .join('');
+
+        // Check if first 6 bits are zero
+        if (binary.substring(0, 6) === '000000') {
+          winner = name;
+          const block = {
+            index: blockchain.length,
+            timestamp: Date.now(),
+            winner: name,
+            hash: hash,
+            previousHash: blockchain.length > 0 ? blockchain[blockchain.length - 1].hash : '0'
+          };
+          blockchain.push(block);
+          io.emit('roundEnded', { winner: name, hash, round: currentRound, block });
+          currentRound = null;
+        }
       } else {
         console.log('Hash invalid or round not active. Current round:', currentRound, 'Winner:', winner);
       }
