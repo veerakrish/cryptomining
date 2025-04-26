@@ -5,7 +5,8 @@ const { Server } = require('socket.io');
 
 const dev = process.env.NODE_ENV !== 'production';
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
-const app = next({ dev });
+const hostname = '0.0.0.0';
+const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 let server = null;
@@ -35,9 +36,15 @@ process.on('SIGTERM', handleShutdown);
 process.on('SIGINT', handleShutdown);
 
 app.prepare().then(() => {
-  server = createServer((req, res) => {
-    const parsedUrl = parse(req.url, true);
-    handle(req, res, parsedUrl);
+  server = createServer(async (req, res) => {
+    try {
+      const parsedUrl = parse(req.url, true);
+      await handle(req, res, parsedUrl);
+    } catch (err) {
+      console.error('Error occurred handling', req.url, err);
+      res.statusCode = 500;
+      res.end('Internal Server Error');
+    }
   });
 
   io = new Server(server, {
@@ -141,11 +148,12 @@ app.prepare().then(() => {
     });
   });
 
-  server.listen(port, '0.0.0.0', () => {
-    console.log(`> Server running on port ${port}`);
-    console.log('> Environment:', process.env.NODE_ENV);
-    console.log('> WebSocket server ready');
-  });
+  server.listen(port, hostname, (err) => {
+    if (err) throw err;
+    console.log(`> Ready on http://${hostname}:${port}`);
+  }); 
+  console.log('> Environment:', process.env.NODE_ENV);
+  console.log('> WebSocket server ready');
 }).catch((err) => {
   console.error('Error starting server:', err);
   process.exit(1);

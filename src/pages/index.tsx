@@ -32,8 +32,10 @@ export default function Home() {
     await fetch('/api/socket');
     socket = socketIO(typeof window !== 'undefined' ? window.location.origin : '', {
       path: '/api/socket',
-
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
     });
 
     socket.on('participants', (updatedParticipants: string[]) => {
