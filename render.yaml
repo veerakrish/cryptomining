@@ -2,11 +2,18 @@ services:
   - type: web
     name: bitcoin-mining-game
     env: node
-    buildCommand: npm ci && npm run build
+    runtime: node
+    nodeVersion: 18
+    buildCommand: |
+      npm ci
+      npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 8080
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://bitcoin-mining-game.onrender.com
     healthCheckPath: /api/health
+    autoDeploy: true
